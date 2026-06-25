@@ -1,0 +1,119 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
+
+[node name="MainMenu" type="ColorRect"]
+script = ExtResource("1")
+color = Color(0.08, 0.09, 0.14, 1)
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+anchor_bottom = 1
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="."]
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+offset_bottom = 80
+text = "扫雷×解谜 RPG"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="Subtitle" type="Label" parent="."]
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+offset_top = 100
+offset_bottom = 140
+text = "Minesweeper RPG"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 1)
+
+[node name="ClassicBtn" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100
+offset_top = -70
+offset_right = 100
+offset_bottom = -40
+text = "🎯 经典模式"
+theme_override_font_sizes/font_size = 20
+
+[node name="RpgBtn" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100
+offset_top = -30
+offset_right = 100
+offset_bottom = 0
+text = "⚔️ RPG 模式"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+
+[node name="RpgBtn/Label" type="Label" parent="RpgBtn"]
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+offset_top = 26
+offset_bottom = 42
+text = "翻格遇怪 — 战斗升级 — 踩雷 Boss 战"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+
+[node name="RogueBtn" type="Button" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100
+offset_top = 10
+offset_right = 100
+offset_bottom = 40
+text = "🏰 爬塔模式"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+
+[node name="RogueBtn/Label" type="Label" parent="RogueBtn"]
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+offset_top = 26
+offset_bottom = 42
+text = "Roguelike — 10层地牢，层间选遗物"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+
+[node name="Version" type="Label" parent="."]
+anchor_left = 0
+anchor_top = 0
+anchor_right = 1
+offset_top = 0
+offset_bottom = 0
+text = "v0.1"
+horizontal_alignment = 2
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 1)
+
+[node name="MineIcon" type="Label" parent="."]
+anchor_left = 0
+anchor_right = 1
+offset_top = 280
+offset_bottom = 350
+text = "💣"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 36
