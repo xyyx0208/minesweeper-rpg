@@ -52,4 +52,8 @@
 3. ✅ 修改 `scripts/game_state.gd` 增加 `rpg_mode := false`
 4. ✅ 修改 `scripts/main_menu.gd + main_menu.tscn` 增加「⚔️ RPG 模式」按钮
 5. ✅ 修改 `scripts/game_manager.gd`：`_ready` 中初始化 RPG，`_reveal_cell` 中挂钩子，RPG HUD，战斗弹窗
-6. 🔲 测试：翻格遇敌→踩雷Boss→清空通关
+6. ✅ 创建 `scripts/art_generator.gd`：程序化像素风美术（8怪+Boss像素画、HP/XP条、地牢背景、升级徽章）
+7. ✅ 重写 RPG HUD：可视化 HP 条 + XP 条 + 状态文本
+8. ✅ 重写战斗弹窗：怪物像素精灵 + 视觉 HP 渐变条 + 升级徽章效果
+9. ✅ 主菜单：像素地牢砖墙背景 + 按钮悬停动画
+10. 🔲 测试：翻格遇敌→踩雷Boss→清空通关

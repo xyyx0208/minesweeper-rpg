@@ -1,6 +1,8 @@
 extends Node
 ## 扫雷游戏核心管理器
 ## 负责：布雷、揭开/标记、胜负判定、计时、UI 布局
+
+const ArtGen = preload("res://scripts/art_generator.gd")
 ## Android: 新增触摸输入（长按旗帜）
 ## Roguelike: 爬塔模式集成
 ## RPG: 翻格遇敌模式集成
@@ -104,9 +106,13 @@ var _rogue_tutorial_shown := false
 var rpg_mode := false
 var rpg_manager_ref = null
 var rpg_hud: ColorRect
+var rpg_hp_bar_fill: ColorRect
+var rpg_xp_bar_fill: ColorRect
+var rpg_hp_label: Label
 var rpg_stats_label: Label
 var rpg_battle_dialog: ColorRect
 var _rpg_chain_count := 0
+var art_gen: Node
 
 # ─── 主题系统 ───────────────────────────────────────
 enum GameTheme { DARK, LIGHT, CLASSIC, NEON }
@@ -1158,7 +1164,7 @@ func _show_rogue_tutorial() -> void:
 
 
 # ═══════════════════════════════════════════════════
-#  RPG UI
+#  RPG UI — 美术增强版
 # ═══════════════════════════════════════════════════
 
 func _build_rpg_hud() -> void:
@@ -1169,35 +1175,130 @@ func _build_rpg_hud() -> void:
 	rpg_hud.anchor_top = 0.0
 	rpg_hud.anchor_right = 1.0
 	rpg_hud.offset_top = 42
-	rpg_hud.offset_bottom = 72
+	rpg_hud.offset_bottom = 80
 	rpg_hud.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(rpg_hud)
 
+	var margin := 4
+	var row_h := 16
+
+	# ─── 第1行：HP ────────────────────────────────
+	var hp_row := HBoxContainer.new()
+	hp_row.anchor_left = 0.0
+	hp_row.anchor_top = 0.0
+	hp_row.anchor_right = 1.0
+	hp_row.offset_top = margin
+	hp_row.offset_bottom = margin + row_h
+	rpg_hud.add_child(hp_row)
+
+	var hp_icon := Label.new()
+	hp_icon.text = " ❤️"
+	hp_icon.custom_minimum_size = Vector2(22, row_h)
+	hp_icon.add_theme_font_size_override("font_size", 11)
+	hp_icon.add_theme_color_override("font_color", Color("#ff6666"))
+	hp_row.add_child(hp_icon)
+
+	rpg_hp_label = Label.new()
+	rpg_hp_label.text = "30/30"
+	rpg_hp_label.custom_minimum_size = Vector2(44, row_h)
+	rpg_hp_label.add_theme_font_size_override("font_size", 9)
+	rpg_hp_label.add_theme_color_override("font_color", Color("#c0e0c0"))
+	hp_row.add_child(rpg_hp_label)
+
+	# HP 条背景
+	var hp_bg := ColorRect.new()
+	hp_bg.color = Color("#1a1a1a")
+	hp_bg.size_flags_horizontal = Control.SIZE_EXPAND
+	hp_bg.custom_minimum_size = Vector2(40, row_h - 2)
+	hp_bg.clip_contents = true
+	hp_row.add_child(hp_bg)
+
+	# HP 条填充
+	rpg_hp_bar_fill = ColorRect.new()
+	rpg_hp_bar_fill.color = Color("#22cc44")
+	rpg_hp_bar_fill.anchor_left = 0.0
+	rpg_hp_bar_fill.anchor_top = 0.0
+	rpg_hp_bar_fill.anchor_right = 1.0
+	rpg_hp_bar_fill.anchor_bottom = 1.0
+	hp_bg.add_child(rpg_hp_bar_fill)
+
+	# ─── 第2行：XP + Stats ────────────────────────
+	var xp_row := HBoxContainer.new()
+	xp_row.anchor_left = 0.0
+	xp_row.anchor_top = 0.0
+	xp_row.anchor_right = 1.0
+	xp_row.offset_top = margin + row_h + 2
+	xp_row.offset_bottom = margin + row_h * 2 + 2
+	rpg_hud.add_child(xp_row)
+
+	var xp_icon := Label.new()
+	xp_icon.text = " ⭐"
+	xp_icon.custom_minimum_size = Vector2(22, row_h - 2)
+	xp_icon.add_theme_font_size_override("font_size", 9)
+	xp_icon.add_theme_color_override("font_color", Color("#ffcc00"))
+	xp_row.add_child(xp_icon)
+
+	# XP 条背景
+	var xp_bg := ColorRect.new()
+	xp_bg.color = Color("#1a1a1a")
+	xp_bg.custom_minimum_size = Vector2(60, row_h - 3)
+	xp_bg.size_flags_horizontal = Control.SIZE_EXPAND
+	xp_bg.clip_contents = true
+	xp_row.add_child(xp_bg)
+
+	# XP 条填充
+	rpg_xp_bar_fill = ColorRect.new()
+	rpg_xp_bar_fill.color = Color("#4488ff")
+	rpg_xp_bar_fill.anchor_left = 0.0
+	rpg_xp_bar_fill.anchor_top = 0.0
+	rpg_xp_bar_fill.anchor_right = 0.0  # 由 _update_rpg_hud 控制
+	rpg_xp_bar_fill.anchor_bottom = 1.0
+	xp_bg.add_child(rpg_xp_bar_fill)
+
+	# 状态文本
 	rpg_stats_label = Label.new()
-	rpg_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rpg_stats_label.text = "Lv.1 | ATK:5 DEF:2 | 💰0"
+	rpg_stats_label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	rpg_stats_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	rpg_stats_label.add_theme_font_size_override("font_size", 12)
-	rpg_stats_label.add_theme_color_override("font_color", Color("#c0e0c0"))
-	rpg_stats_label.anchor_left = 0.0
-	rpg_stats_label.anchor_top = 0.0
-	rpg_stats_label.anchor_right = 1.0
-	rpg_stats_label.anchor_bottom = 1.0
-	rpg_hud.add_child(rpg_stats_label)
+	rpg_stats_label.custom_minimum_size = Vector2(180, row_h - 2)
+	rpg_stats_label.add_theme_font_size_override("font_size", 9)
+	rpg_stats_label.add_theme_color_override("font_color", Color("#a0c0a0"))
+	xp_row.add_child(rpg_stats_label)
 
 
 func _update_rpg_hud() -> void:
 	if not is_instance_valid(rpg_manager_ref):
 		return
 	var s = rpg_manager_ref.stats
-	var hp_bar := ""
-	for i in range(s.max_hp / 5):
-		hp_bar += "❤️" if i * 5 < s.hp else "🖤"
-	var xp_total := rpg_manager_ref._xp_for_level(s.level)
+	var xp_total: int = rpg_manager_ref._xp_for_level(s.level)
+
+	# HP 条
+	var hp_ratio: float = clamp(float(s.hp) / max(s.max_hp, 1), 0.0, 1.0)
+	if is_instance_valid(rpg_hp_bar_fill):
+		rpg_hp_bar_fill.anchor_right = hp_ratio
+		# 渐变色
+		if hp_ratio > 0.5:
+			rpg_hp_bar_fill.color = Color("#22cc44")
+		elif hp_ratio > 0.25:
+			rpg_hp_bar_fill.color = Color("#cccc22")
+		else:
+			rpg_hp_bar_fill.color = Color("#cc3333")
+
+	if is_instance_valid(rpg_hp_label):
+		rpg_hp_label.text = "%d/%d" % [s.hp, s.max_hp]
+
+	# XP 条
+	if is_instance_valid(rpg_xp_bar_fill):
+		var xp_ratio: float = clamp(float(s.xp) / max(xp_total, 1), 0.0, 1.0)
+		rpg_xp_bar_fill.anchor_right = xp_ratio
+
+	# 状态文本
 	var combo_text := ""
 	if _rpg_chain_count > 0:
-		combo_text = " | 🔗 Combo x%d" % _rpg_chain_count
-	rpg_stats_label.text = "%s | Lv.%d | ⚔️ATK:%d | 🛡️DEF:%d | 💰%d | XP:%d/%d%s" % \
-		[hp_bar, s.level, s.atk, s.defense, s.gold, s.xp, xp_total, combo_text]
+		combo_text = " 🔗x%d" % _rpg_chain_count
+	if is_instance_valid(rpg_stats_label):
+		rpg_stats_label.text = "Lv.%d | ⚔️%d 🛡️%d | 💰%d%s" % \
+			[s.level, s.atk, s.defense, s.gold, combo_text]
 
 
 func _build_rpg_battle_dialog() -> void:
@@ -1220,102 +1321,137 @@ func _show_rpg_battle_result(result: Dictionary) -> void:
 	await get_tree().process_frame
 
 	var monster = result.get("monster")
-	var monster_name = result.get("monster_name", monster.name if monster else "???")
-	var monster_icon = monster.icon if monster else "👑"
-	var is_boss = result.get("is_boss", false)
+	var monster_id: int = monster.id if monster else 0
+	var monster_name: String = result.get("monster_name", monster.name if monster else "???")
+	var is_boss: bool = result.get("is_boss", false)
 
 	var panel := ColorRect.new()
-	panel.color = Color("#1a1a1a")
-	panel.custom_minimum_size = Vector2(300, 240)
-	panel.size = Vector2(300, 240)
-	panel.position = Vector2(110, 150)
+	panel.color = Color("#0d1a0d")
+	panel.custom_minimum_size = Vector2(320, 300)
+	panel.size = Vector2(320, 300)
+	panel.position = Vector2(100, 130)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	rpg_battle_dialog.add_child(panel)
 
-	if result.result == "win":
-		var title_text := "%s 击败 %s！" % [monster_icon, monster_name]
+	# 边框装饰
+	var border := ColorRect.new()
+	border.color = Color("#336633") if not is_boss else Color("#cc8800")
+	border.anchor_left = 0.0
+	border.anchor_top = 0.0
+	border.anchor_right = 1.0
+	border.anchor_bottom = 1.0
+	border.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.add_child(border)
+	# 内边距用子 panel
+	var inner := ColorRect.new()
+	inner.color = Color("#0d1a0d")
+	inner.anchor_left = 0.0
+	inner.anchor_top = 0.0
+	inner.anchor_right = 1.0
+	inner.anchor_bottom = 1.0
+	inner.offset_left = 3
+	inner.offset_top = 3
+	inner.offset_right = -3
+	inner.offset_bottom = -3
+	inner.mouse_filter = Control.MOUSE_FILTER_PASS
+	panel.add_child(inner)
+
+	# ─── 怪物精灵 ────────────────────────────────
+	if is_instance_valid(art_gen):
+		var tex_rect := TextureRect.new()
 		if is_boss:
-			title_text = "👑 击败 Boss %s！" % monster_name
+			tex_rect.texture = art_gen.boss_sprite(6)  # 96x84
+		elif monster_id > 0:
+			tex_rect.texture = art_gen.monster_sprite(monster_id, 6)  # 72x72
+		if tex_rect.texture:
+			tex_rect.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			tex_rect.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			tex_rect.position = Vector2(0, 16)
+			tex_rect.size = Vector2(320, 96)
+			tex_rect.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			tex_rect.mouse_filter = Control.MOUSE_FILTER_PASS
+			inner.add_child(tex_rect)
 
-		var title := Label.new()
-		title.text = title_text
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		title.position = Vector2(0, 16)
-		title.size = Vector2(300, 32)
-		title.add_theme_font_size_override("font_size", 18)
-		title.add_theme_color_override("font_color", Color("#4acf4a") if not is_boss else Color("#ffcc00"))
-		panel.add_child(title)
+	# ─── 怪物名 ──────────────────────────────────
+	var name_row := HBoxContainer.new()
+	name_row.position = Vector2(16, 100)
+	name_row.size = Vector2(288, 28)
+	inner.add_child(name_row)
 
-		var damage_text := "受到 %d 点伤害" % result.damage_taken
-		var dmg_label := Label.new()
-		dmg_label.text = damage_text
-		dmg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		dmg_label.position = Vector2(0, 56)
-		dmg_label.size = Vector2(300, 24)
-		dmg_label.add_theme_font_size_override("font_size", 14)
-		dmg_label.add_theme_color_override("font_color", Color("#ff8844"))
-		panel.add_child(dmg_label)
+	var icon_lbl := Label.new()
+	icon_lbl.text = "👑 " if is_boss else (monster.icon + " " if monster else "👾 ")
+	icon_lbl.add_theme_font_size_override("font_size", 16)
+	name_row.add_child(icon_lbl)
 
-		var rewards_text := "+%d XP · +%d Gold" % [result.xp, result.gold]
-		var rwd_label := Label.new()
-		rwd_label.text = rewards_text
-		rwd_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		rwd_label.position = Vector2(0, 84)
-		rwd_label.size = Vector2(300, 24)
-		rwd_label.add_theme_font_size_override("font_size", 16)
-		rwd_label.add_theme_color_override("font_color", Color("#ffcc00"))
-		panel.add_child(rwd_label)
+	var name_lbl := Label.new()
+	name_lbl.text = monster_name
+	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_color_override("font_color",
+		Color("#ffcc00") if is_boss else Color("#c0d0c0"))
+	name_row.add_child(name_lbl)
 
-		if result.get("leveled_up", false):
-			var lv_label := Label.new()
-			lv_label.text = "⬆️ 升级！Lv.%d" % rpg_manager_ref.stats.level
-			lv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			lv_label.position = Vector2(0, 112)
-			lv_label.size = Vector2(300, 24)
-			lv_label.add_theme_font_size_override("font_size", 16)
-			lv_label.add_theme_color_override("font_color", Color("#4acf4a"))
-			panel.add_child(lv_label)
+	# ─── 伤害信息 ────────────────────────────────
+	var dmg_lbl := Label.new()
+	var dmg_color := Color("#44aa44")
+	if result.result == "win":
+		if result.damage_taken > 0:
+			dmg_lbl.text = "⚔️ 受到 %d 点伤害" % result.damage_taken
+			dmg_color = Color("#ff8844")
+		else:
+			dmg_lbl.text = "⚔️ 无伤击败！"
+			dmg_color = Color("#44cc44")
 	else:
-		# flee
-		var title := Label.new()
-		title.text = "⚔️ 不敌 %s！" % monster_name
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		title.position = Vector2(0, 16)
-		title.size = Vector2(300, 32)
-		title.add_theme_font_size_override("font_size", 18)
-		title.add_theme_color_override("font_color", Color("#ff6666"))
-		panel.add_child(title)
+		dmg_lbl.text = "⚔️ 损失 %d 点生命，撤退" % result.damage_taken
+		dmg_color = Color("#ff6666")
+	dmg_lbl.position = Vector2(16, 130)
+	dmg_lbl.size = Vector2(288, 22)
+	dmg_lbl.add_theme_font_size_override("font_size", 13)
+	dmg_lbl.add_theme_color_override("font_color", dmg_color)
+	inner.add_child(dmg_lbl)
 
-		var dmg_text := "损失 %d 点生命，撤退" % result.damage_taken
-		var dmg_label := Label.new()
-		dmg_label.text = dmg_text
-		dmg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		dmg_label.position = Vector2(0, 56)
-		dmg_label.size = Vector2(300, 24)
-		dmg_label.add_theme_font_size_override("font_size", 14)
-		dmg_label.add_theme_color_override("font_color", Color("#ff8844"))
-		panel.add_child(dmg_label)
+	# ─── 奖励 ────────────────────────────────────
+	if result.result == "win":
+		var rwd_lbl := Label.new()
+		rwd_lbl.text = "+%d XP  +%d Gold" % [result.xp, result.gold]
+		rwd_lbl.position = Vector2(16, 156)
+		rwd_lbl.size = Vector2(288, 22)
+		rwd_lbl.add_theme_font_size_override("font_size", 14)
+		rwd_lbl.add_theme_color_override("font_color", Color("#ffcc00"))
+		inner.add_child(rwd_lbl)
 
-		var hint_label := Label.new()
-		hint_label.text = "先升级再来挑战！"
-		hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		hint_label.position = Vector2(0, 88)
-		hint_label.size = Vector2(300, 24)
-		hint_label.add_theme_font_size_override("font_size", 13)
-		hint_label.add_theme_color_override("font_color", Color("#888888"))
-		panel.add_child(hint_label)
+		# ─── 升级徽章 ────────────────────────────
+		if result.get("leveled_up", false) and is_instance_valid(art_gen):
+			var lv_badge := TextureRect.new()
+			lv_badge.texture = art_gen.level_up_badge(3)
+			lv_badge.position = Vector2(120, 180)
+			lv_badge.size = Vector2(42, 42)
+			lv_badge.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+			lv_badge.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			inner.add_child(lv_badge)
 
+			var lv_lbl := Label.new()
+			lv_lbl.text = "⬆ Lv.%d!" % rpg_manager_ref.stats.level
+			lv_lbl.position = Vector2(16, 220)
+			lv_lbl.size = Vector2(288, 22)
+			lv_lbl.add_theme_font_size_override("font_size", 15)
+			lv_lbl.add_theme_color_override("font_color", Color("#44ff44"))
+			lv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			inner.add_child(lv_lbl)
+
+	# ─── 按钮 ────────────────────────────────────
 	var ok_btn := Button.new()
-	ok_btn.text = "继续" if result.result == "win" else "撤退"
-	ok_btn.position = Vector2(90, 160)
+	ok_btn.text = "继续冒险"
+	ok_btn.position = Vector2(100, 254)
 	ok_btn.custom_minimum_size = Vector2(120, 36)
-	ok_btn.add_theme_font_size_override("font_size", 16)
+	ok_btn.add_theme_font_size_override("font_size", 15)
+	ok_btn.add_theme_color_override("font_color", Color("#e0e0e0"))
 	ok_btn.pressed.connect(func():
 		rpg_battle_dialog.hide()
 		if is_boss and result.result == "dead":
 			_show_result(false)
 	)
-	panel.add_child(ok_btn)
+	inner.add_child(ok_btn)
 
 	rpg_battle_dialog.show()
 
@@ -1439,6 +1575,11 @@ func _init_rpg_mode() -> void:
 	rpg_manager_ref.name = "RpgManager"
 	add_child(rpg_manager_ref)
 	rpg_manager_ref.player_died.connect(_on_rpg_player_died)
+
+	# 初始化美术生成器
+	art_gen = ArtGen.new()
+	art_gen.name = "ArtGen"
+	add_child(art_gen)
 
 	# 用初级难度开始
 	current_difficulty = Difficulty.BEGINNER
