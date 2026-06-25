@@ -1,119 +1,120 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dhydj0pa6djc7"]
 
-[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
+[ext_resource type="Script" uid="uid://bxcvobhyfljrb" path="res://scripts/main_menu.gd" id="1"]
 
-[node name="MainMenu" type="ColorRect"]
-script = ExtResource("1")
-color = Color(0.08, 0.09, 0.14, 1)
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-anchor_bottom = 1
+[node name="MainMenu" type="ColorRect" unique_id=300510601]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
+color = Color(0.08, 0.09, 0.14, 1)
+script = ExtResource("1")
 
-[node name="Title" type="Label" parent="."]
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-offset_bottom = 80
+[node name="Title" type="Label" parent="." unique_id=1168961120]
+layout_mode = 0
+anchor_right = 1.0
+offset_bottom = 80.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 48
 text = "扫雷×解谜 RPG"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 48
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 
-[node name="Subtitle" type="Label" parent="."]
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-offset_top = 100
-offset_bottom = 140
+[node name="Subtitle" type="Label" parent="." unique_id=1438570007]
+layout_mode = 0
+anchor_right = 1.0
+offset_top = 100.0
+offset_bottom = 140.0
+theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 1)
+theme_override_font_sizes/font_size = 20
 text = "Minesweeper RPG"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 20
-theme_override_colors/font_color = Color(0.5, 0.5, 0.6, 1)
 
-[node name="ClassicBtn" type="Button" parent="."]
+[node name="ClassicBtn" type="Button" parent="." unique_id=870689152]
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100
-offset_top = -70
-offset_right = 100
-offset_bottom = -40
+offset_left = -100.0
+offset_top = -70.0
+offset_right = 100.0
+offset_bottom = -40.0
+theme_override_font_sizes/font_size = 20
 text = "🎯 经典模式"
-theme_override_font_sizes/font_size = 20
 
-[node name="RpgBtn" type="Button" parent="."]
+[node name="RpgBtn" type="Button" parent="." unique_id=282042331]
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100
-offset_top = -30
-offset_right = 100
-offset_bottom = 0
-text = "⚔️ RPG 模式"
-theme_override_font_sizes/font_size = 20
+offset_left = -100.0
+offset_top = -30.0
+offset_right = 100.0
 theme_override_colors/font_color = Color(0.4, 1, 0.4, 1)
+theme_override_font_sizes/font_size = 20
+text = "⚔️ RPG 模式"
 
-[node name="RpgBtn/Label" type="Label" parent="RpgBtn"]
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-offset_top = 26
-offset_bottom = 42
+[node name="RpgBtn/Label" type="Label" parent="RpgBtn" unique_id=434681044]
+layout_mode = 0
+anchor_right = 1.0
+offset_top = 26.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+theme_override_font_sizes/font_size = 11
 text = "翻格遇怪 — 战斗升级 — 踩雷 Boss 战"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
 
-[node name="RogueBtn" type="Button" parent="."]
+[node name="RogueBtn" type="Button" parent="." unique_id=1845306381]
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100
-offset_top = 10
-offset_right = 100
-offset_bottom = 40
-text = "🏰 爬塔模式"
-theme_override_font_sizes/font_size = 20
+offset_left = -100.0
+offset_top = 10.0
+offset_right = 100.0
+offset_bottom = 40.0
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "🏰 爬塔模式"
 
-[node name="RogueBtn/Label" type="Label" parent="RogueBtn"]
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-offset_top = 26
-offset_bottom = 42
+[node name="RogueBtn/Label" type="Label" parent="RogueBtn" unique_id=1757695157]
+layout_mode = 0
+anchor_right = 1.0
+offset_top = 26.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
+theme_override_font_sizes/font_size = 11
 text = "Roguelike — 10层地牢，层间选遗物"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.6, 0.6, 0.7, 1)
 
-[node name="Version" type="Label" parent="."]
-anchor_left = 0
-anchor_top = 0
-anchor_right = 1
-offset_top = 0
-offset_bottom = 0
+[node name="Version" type="Label" parent="." unique_id=999533719]
+layout_mode = 0
+anchor_right = 1.0
+theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 1)
+theme_override_font_sizes/font_size = 12
 text = "v0.1"
 horizontal_alignment = 2
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 1)
 
-[node name="MineIcon" type="Label" parent="."]
-anchor_left = 0
-anchor_right = 1
-offset_top = 280
-offset_bottom = 350
+[node name="MineIcon" type="Label" parent="." unique_id=2138272823]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 1.0
+offset_top = 141.0
+offset_right = 1.0
+offset_bottom = 211.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 36
 text = "💣"
 horizontal_alignment = 1
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 36
