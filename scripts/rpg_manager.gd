@@ -190,7 +190,7 @@ func _resolve_battle(monster_hp: int, monster_atk: int, monster_def: int) -> Dic
 # ─── 等级系统 ─────────────────────────────────────
 
 func _check_level_up() -> bool:
-	var threshold := _xp_for_level(stats.level)
+	var threshold := xp_for_level(stats.level)
 	if stats.xp >= threshold:
 		stats.level += 1
 		stats.xp -= threshold
@@ -202,7 +202,7 @@ func _check_level_up() -> bool:
 	return false
 
 
-func _xp_for_level(level: int) -> int:
+func xp_for_level(level: int) -> int:
 	return level * 18 + 5
 
 

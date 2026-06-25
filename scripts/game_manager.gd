@@ -1215,6 +1215,7 @@ func _build_rpg_hud() -> void:
 
 	# HP 条填充
 	rpg_hp_bar_fill = ColorRect.new()
+	rpg_hp_bar_fill.layout_mode = 1
 	rpg_hp_bar_fill.color = Color("#22cc44")
 	rpg_hp_bar_fill.anchor_left = 0.0
 	rpg_hp_bar_fill.anchor_top = 0.0
@@ -1249,6 +1250,7 @@ func _build_rpg_hud() -> void:
 	# XP 条填充
 	rpg_xp_bar_fill = ColorRect.new()
 	rpg_xp_bar_fill.color = Color("#4488ff")
+	rpg_xp_bar_fill.layout_mode = 1
 	rpg_xp_bar_fill.anchor_left = 0.0
 	rpg_xp_bar_fill.anchor_top = 0.0
 	rpg_xp_bar_fill.anchor_right = 0.0  # 由 _update_rpg_hud 控制
@@ -1270,7 +1272,7 @@ func _update_rpg_hud() -> void:
 	if not is_instance_valid(rpg_manager_ref):
 		return
 	var s = rpg_manager_ref.stats
-	var xp_total: int = rpg_manager_ref._xp_for_level(s.level)
+	var xp_total: int = rpg_manager_ref.xp_for_level(s.level)
 
 	# HP 条
 	var hp_ratio: float = clamp(float(s.hp) / max(s.max_hp, 1), 0.0, 1.0)
@@ -1694,10 +1696,14 @@ func _on_play_again() -> void:
 		rogue_manager_ref = null
 		_init_rogue_mode()
 		return
-	# RPG 模式结束后：重新开始
+	# RPG 模式结束后：重新开始（清理旧资源）
 	if rpg_mode:
-		rpg_manager_ref.queue_free()
+		if is_instance_valid(rpg_manager_ref):
+			rpg_manager_ref.queue_free()
+		if is_instance_valid(art_gen):
+			art_gen.queue_free()
 		rpg_manager_ref = null
+		art_gen = null
 		_init_rpg_mode()
 		return
 	reset_game()
