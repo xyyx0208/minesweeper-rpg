@@ -1,0 +1,23 @@
+# Godot 项目
+.godot/
+*.import
+*.translation
+*.uid
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Builds
+/builds/
+export_presets.cfg
+
+# Claude
+.claude/
