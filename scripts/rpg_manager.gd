@@ -36,7 +36,7 @@ class MonsterData:
 		xp_reward = p_xp
 		gold_reward = p_gold
 
-const MONSTERS := {
+var MONSTERS := {
 	1: MonsterData.new(1, "史莱姆", "🟢",  5,  2, 0,  3,  1),
 	2: MonsterData.new(2, "哥布林", "🟤",  8,  3, 1,  6,  2),
 	3: MonsterData.new(3, "骷髅兵", "⚪", 12,  4, 2, 10,  4),
