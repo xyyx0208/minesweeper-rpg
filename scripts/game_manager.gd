@@ -1075,7 +1075,7 @@ func _show_floor_transition() -> void:
 	var floor: int = rogue_manager_ref.current_floor
 
 	var color_icons := ["", "", "🟢", "🟢", "🟡", "🟡", "🟠", "🟠", "🔴", "🔴", "👑"]
-	var ci := mini(floor, 10)
+	var ci: int = mini(floor, 10)
 	var label_txt := "%s 第%d层" % [color_icons[ci], floor]
 	var info_txt := "%d×%d 网格 · %d颗雷" % [cfg.cols, cfg.rows, cfg.mines]
 
@@ -1215,7 +1215,6 @@ func _build_rpg_hud() -> void:
 
 	# HP 条填充
 	rpg_hp_bar_fill = ColorRect.new()
-	rpg_hp_bar_fill.layout_mode = 1
 	rpg_hp_bar_fill.color = Color("#22cc44")
 	rpg_hp_bar_fill.anchor_left = 0.0
 	rpg_hp_bar_fill.anchor_top = 0.0
@@ -1250,7 +1249,6 @@ func _build_rpg_hud() -> void:
 	# XP 条填充
 	rpg_xp_bar_fill = ColorRect.new()
 	rpg_xp_bar_fill.color = Color("#4488ff")
-	rpg_xp_bar_fill.layout_mode = 1
 	rpg_xp_bar_fill.anchor_left = 0.0
 	rpg_xp_bar_fill.anchor_top = 0.0
 	rpg_xp_bar_fill.anchor_right = 0.0  # 由 _update_rpg_hud 控制

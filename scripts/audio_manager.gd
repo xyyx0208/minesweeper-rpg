@@ -123,7 +123,7 @@ func _gen_arpeggio(duration: float) -> PackedByteArray:
 	var note_len := n / notes.size()
 	for i in range(n):
 		var t := float(i) / RATE
-		var note_idx := mini(i / note_len, notes.size() - 1)
+		var note_idx: int = mini(i / note_len, notes.size() - 1)
 		var freq: float = notes[note_idx]
 		var env := exp(-1.5 * t / duration)
 		var sample: float = sign(sin(2.0 * PI * freq * t)) * AMPLITUDE * env

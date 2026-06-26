@@ -165,11 +165,11 @@ func encounter_boss(combo: int) -> Dictionary:
 
 # 内部战斗结算：回合制模拟，自动返回结果
 func _resolve_battle(monster_hp: int, monster_atk: int, monster_def: int) -> Dictionary:
-	var player_dmg := max(1, stats.atk - monster_def)
-	var monster_dmg := max(1, monster_atk - stats.defense)
+	var player_dmg: int = max(1, stats.atk - monster_def)
+	var monster_dmg: int = max(1, monster_atk - stats.defense)
 
-	var m_hp := monster_hp
-	var p_hp := stats.hp
+	var m_hp: int = monster_hp
+	var p_hp: int = stats.hp
 	var total_damage := 0
 
 	while m_hp > 0 and p_hp > 0:
