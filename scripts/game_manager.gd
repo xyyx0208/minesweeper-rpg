@@ -1364,8 +1364,6 @@ func _show_rpg_battle_result(result: Dictionary) -> void:
 		elif monster_id > 0:
 			tex_rect.texture = art_gen.monster_sprite(monster_id, 6)  # 72x72
 		if tex_rect.texture:
-			tex_rect.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			tex_rect.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			tex_rect.position = Vector2(0, 16)
 			tex_rect.size = Vector2(320, 96)
 			tex_rect.expand_mode = TextureRect.EXPAND_KEEP_SIZE
