@@ -1,0 +1,102 @@
+{
+  "name": "扫雷RPG玩法体系设计与战略分析",
+  "success": true,
+  "totalDuration": "251.2s",
+  "totalTokens": {
+    "input": 53744,
+    "output": 20271
+  },
+  "inputs": {},
+  "steps": [
+    {
+      "id": "market_research",
+      "role": "product/product-trend-researcher",
+      "agentName": "游戏市场研究员",
+      "agentEmoji": "🔍",
+      "status": "completed",
+      "output_var": "market_data",
+      "duration": "23.2s",
+      "tokens": {
+        "input": 4526,
+        "output": 1515
+      }
+    },
+    {
+      "id": "trend_analysis",
+      "role": "game-development/game-designer",
+      "agentName": "游戏趋势分析师",
+      "agentEmoji": "📈",
+      "status": "completed",
+      "output_var": "trend_data",
+      "duration": "20.1s",
+      "tokens": {
+        "input": 5014,
+        "output": 1130
+      }
+    },
+    {
+      "id": "core_mechanic_design",
+      "role": "game-development/game-designer",
+      "agentName": "核心玩法设计师",
+      "agentEmoji": "🎮",
+      "status": "completed",
+      "output_var": "core_design",
+      "duration": "46.1s",
+      "tokens": {
+        "input": 7443,
+        "output": 3923
+      }
+    },
+    {
+      "id": "rpg_system_design",
+      "role": "game-development/game-designer",
+      "agentName": "RPG系统设计师",
+      "agentEmoji": "⚔️",
+      "status": "completed",
+      "output_var": "rpg_design",
+      "duration": "78.4s",
+      "tokens": {
+        "input": 7468,
+        "output": 7896
+      }
+    },
+    {
+      "id": "level_settlement_design",
+      "role": "game-development/game-designer",
+      "agentName": "关卡与结算设计师",
+      "agentEmoji": "🏆",
+      "status": "completed",
+      "output_var": "level_design",
+      "duration": "17.9s",
+      "tokens": {
+        "input": 7527,
+        "output": 1149
+      }
+    },
+    {
+      "id": "risk_analysis",
+      "role": "specialized/specialized-risk-assessor",
+      "agentName": "风险与机会评估师",
+      "agentEmoji": "⚖️",
+      "status": "completed",
+      "output_var": "risk_report",
+      "duration": "35.7s",
+      "tokens": {
+        "input": 9001,
+        "output": 2503
+      }
+    },
+    {
+      "id": "final_report",
+      "role": "specialized/specialized-chief-of-staff",
+      "agentName": "首席策略官",
+      "agentEmoji": "📋",
+      "status": "completed",
+      "duration": "29.8s",
+      "tokens": {
+        "input": 12765,
+        "output": 2155
+      }
+    }
+  ]
+}

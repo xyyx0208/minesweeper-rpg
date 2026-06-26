@@ -213,6 +213,35 @@ func reset() -> void:
 	combo_chain = 0
 
 
+# ─── 军队接口（供 battlefield.gd 调用）─────────────
+
+func get_army_atk() -> int:
+	# 每个士兵的攻击力 = 1 + 等级/3
+	return 1 + stats.level / 3
+
+
+func get_army_def() -> int:
+	# 军队防御 = 玩家DEF + 等级/5
+	return stats.defense + stats.level / 5
+
+
+func get_soldier_hp_per_unit() -> int:
+	# 每个士兵的 HP = 10 + 等级*2
+	return 10 + stats.level * 2
+
+
+func add_rewards(xp: int, gold: int) -> void:
+	# battlefield 击杀怪物后发放奖励
+	stats.xp += xp
+	stats.gold += gold
+	var did_level_up := false
+	while _check_level_up():
+		did_level_up = true
+	if did_level_up:
+		leveled_up.emit(stats.level)
+	stats_changed.emit()
+
+
 # ─── 获取怪物名 ───────────────────────────────────
 
 func get_monster_name(number: int) -> String:

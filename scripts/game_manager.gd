@@ -113,7 +113,7 @@ var rpg_stats_label: Label
 var rpg_battle_dialog: ColorRect
 var _rpg_chain_count := 0
 var art_gen: Node
-
+var battlefield_ref = null
 # ─── 主题系统 ───────────────────────────────────────
 enum GameTheme { DARK, LIGHT, CLASSIC, NEON }
 
@@ -188,7 +188,7 @@ func _ready() -> void:
 	# RPG 模式初始化
 	if rpg_mode:
 		_build_rpg_hud()
-		_build_rpg_battle_dialog()
+		_build_battlefield()
 		_init_rpg_mode()
 
 	_update_window_size()
@@ -444,7 +444,8 @@ func _update_window_size() -> void:
 	var h := cell_size * grid_rows + 45 + 80 + pad
 	# RPG 模式 HUD 更高
 	if rpg_mode:
-		h += 40
+		h += 200
+		w = max(480, w)
 	get_window().size = Vector2i(max(400, w), max(400, h))
 
 
@@ -1301,169 +1302,87 @@ func _update_rpg_hud() -> void:
 			[s.level, s.atk, s.defense, s.gold, combo_text]
 
 
-func _build_rpg_battle_dialog() -> void:
-	rpg_battle_dialog = ColorRect.new()
-	rpg_battle_dialog.name = "RpgBattleDialog"
-	rpg_battle_dialog.color = Color(0, 0, 0, 0.7)
-	rpg_battle_dialog.anchor_left = 0.0
-	rpg_battle_dialog.anchor_top = 0.0
-	rpg_battle_dialog.anchor_right = 1.0
-	rpg_battle_dialog.anchor_bottom = 1.0
-	rpg_battle_dialog.mouse_filter = Control.MOUSE_FILTER_STOP
-	rpg_battle_dialog.hide()
-	add_child(rpg_battle_dialog)
+func _build_battlefield() -> void:
+	var Bf = load("res://scripts/battlefield.gd")
+	battlefield_ref = Bf.new()
+	battlefield_ref.name = "Battlefield"
+	battlefield_ref.anchor_left = 0.0
+	battlefield_ref.anchor_top = 0.0
+	battlefield_ref.anchor_right = 1.0
+	battlefield_ref.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(battlefield_ref)
+	battlefield_ref.setup(rpg_manager_ref, art_gen)
+
+	# Signal connections
+	battlefield_ref.soldiers_changed.connect(_on_bf_soldiers_changed)
+	battlefield_ref.monster_defeated.connect(_on_bf_monster_defeated)
+	battlefield_ref.player_damaged.connect(_on_bf_player_damaged)
+	battlefield_ref.boss_defeated.connect(_on_bf_boss_defeated)
+	battlefield_ref.battlefield_cleared.connect(_on_bf_cleared)
+
+	call_deferred("_relayout_rpg_mode")
+# ─── 战场布局 ──────────────────────────────
+
+func _relayout_rpg_mode() -> void:
+	if not rpg_mode or not is_instance_valid(battlefield_ref) or not is_instance_valid(board_wrapper):
+		return
+	var win_h := get_window().size.y
+	var bf_h := int(win_h * 0.29)
+	battlefield_ref.offset_top = 42.0
+	battlefield_ref.offset_bottom = float(42 + bf_h)
+	board_wrapper.offset_top = float(42 + bf_h + 5)
+	board_wrapper.offset_bottom = -80.0
+
+	if is_instance_valid(rpg_hud):
+		rpg_hud.offset_top = float(42 + bf_h + 5)
+		rpg_hud.offset_bottom = float(42 + bf_h + 5 + 20)
 
 
-func _show_rpg_battle_result(result: Dictionary) -> void:
-	# 清除旧内容
-	for child in rpg_battle_dialog.get_children():
-		child.queue_free()
-	await get_tree().process_frame
+# ─── 战场信号处理 ────────────────────────
 
-	var monster = result.get("monster")
-	var monster_id: int = monster.id if monster else 0
-	var monster_name: String = result.get("monster_name", monster.name if monster else "???")
-	var is_boss: bool = result.get("is_boss", false)
+func _on_bf_soldiers_changed(_count: int) -> void:
+	pass
 
-	var panel := ColorRect.new()
-	panel.color = Color("#0d1a0d")
-	panel.custom_minimum_size = Vector2(320, 300)
-	panel.size = Vector2(320, 300)
-	panel.position = Vector2(100, 130)
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	rpg_battle_dialog.add_child(panel)
+func _on_bf_monster_defeated(_name: String, _xp: int, _gold: int) -> void:
+	audio.play("win")
+	_update_rpg_hud()
 
-	# 边框装饰
-	var border := ColorRect.new()
-	border.color = Color("#336633") if not is_boss else Color("#cc8800")
-	border.anchor_left = 0.0
-	border.anchor_top = 0.0
-	border.anchor_right = 1.0
-	border.anchor_bottom = 1.0
-	border.mouse_filter = Control.MOUSE_FILTER_PASS
-	panel.add_child(border)
-	# 内边距用子 panel
-	var inner := ColorRect.new()
-	inner.color = Color("#0d1a0d")
-	inner.anchor_left = 0.0
-	inner.anchor_top = 0.0
-	inner.anchor_right = 1.0
-	inner.anchor_bottom = 1.0
-	inner.offset_left = 3
-	inner.offset_top = 3
-	inner.offset_right = -3
-	inner.offset_bottom = -3
-	inner.mouse_filter = Control.MOUSE_FILTER_PASS
-	panel.add_child(inner)
+func _on_bf_player_damaged(amount: int) -> void:
+	if not is_instance_valid(rpg_manager_ref):
+		return
+	rpg_manager_ref.stats.hp = max(0, rpg_manager_ref.stats.hp - amount)
+	_update_rpg_hud()
+	if rpg_manager_ref.stats.hp <= 0:
+		game_active = false
+		game_won = false
+		timer_node.stop()
+		restart_btn.text = "f480"
+		game_ended.emit(false)
+		_show_result(false)
 
-	# ─── 怪物精灵 ────────────────────────────────
-	if is_instance_valid(art_gen):
-		var tex_rect := TextureRect.new()
-		if is_boss:
-			tex_rect.texture = art_gen.boss_sprite(6)  # 96x84
-		elif monster_id > 0:
-			tex_rect.texture = art_gen.monster_sprite(monster_id, 6)  # 72x72
-		if tex_rect.texture:
-			tex_rect.position = Vector2(0, 16)
-			tex_rect.size = Vector2(320, 96)
-			tex_rect.expand_mode = TextureRect.EXPAND_KEEP_SIZE
-			tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-			tex_rect.mouse_filter = Control.MOUSE_FILTER_PASS
-			inner.add_child(tex_rect)
+func _on_bf_boss_defeated() -> void:
+	audio.play("win")
+	_update_rpg_hud()
 
-	# ─── 怪物名 ──────────────────────────────────
-	var name_row := HBoxContainer.new()
-	name_row.position = Vector2(16, 100)
-	name_row.size = Vector2(288, 28)
-	inner.add_child(name_row)
-
-	var icon_lbl := Label.new()
-	icon_lbl.text = "👑 " if is_boss else (monster.icon + " " if monster else "👾 ")
-	icon_lbl.add_theme_font_size_override("font_size", 16)
-	name_row.add_child(icon_lbl)
-
-	var name_lbl := Label.new()
-	name_lbl.text = monster_name
-	name_lbl.add_theme_font_size_override("font_size", 16)
-	name_lbl.add_theme_color_override("font_color",
-		Color("#ffcc00") if is_boss else Color("#c0d0c0"))
-	name_row.add_child(name_lbl)
-
-	# ─── 伤害信息 ────────────────────────────────
-	var dmg_lbl := Label.new()
-	var dmg_color := Color("#44aa44")
-	if result.result == "win":
-		if result.damage_taken > 0:
-			dmg_lbl.text = "⚔️ 受到 %d 点伤害" % result.damage_taken
-			dmg_color = Color("#ff8844")
-		else:
-			dmg_lbl.text = "⚔️ 无伤击败！"
-			dmg_color = Color("#44cc44")
-	else:
-		dmg_lbl.text = "⚔️ 损失 %d 点生命，撤退" % result.damage_taken
-		dmg_color = Color("#ff6666")
-	dmg_lbl.position = Vector2(16, 130)
-	dmg_lbl.size = Vector2(288, 22)
-	dmg_lbl.add_theme_font_size_override("font_size", 13)
-	dmg_lbl.add_theme_color_override("font_color", dmg_color)
-	inner.add_child(dmg_lbl)
-
-	# ─── 奖励 ────────────────────────────────────
-	if result.result == "win":
-		var rwd_lbl := Label.new()
-		rwd_lbl.text = "+%d XP  +%d Gold" % [result.xp, result.gold]
-		rwd_lbl.position = Vector2(16, 156)
-		rwd_lbl.size = Vector2(288, 22)
-		rwd_lbl.add_theme_font_size_override("font_size", 14)
-		rwd_lbl.add_theme_color_override("font_color", Color("#ffcc00"))
-		inner.add_child(rwd_lbl)
-
-		# ─── 升级徽章 ────────────────────────────
-		if result.get("leveled_up", false) and is_instance_valid(art_gen):
-			var lv_badge := TextureRect.new()
-			lv_badge.texture = art_gen.level_up_badge(3)
-			lv_badge.position = Vector2(120, 180)
-			lv_badge.size = Vector2(42, 42)
-			lv_badge.expand_mode = TextureRect.EXPAND_KEEP_SIZE
-			lv_badge.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-			inner.add_child(lv_badge)
-
-			var lv_lbl := Label.new()
-			lv_lbl.text = "⬆ Lv.%d!" % rpg_manager_ref.stats.level
-			lv_lbl.position = Vector2(16, 220)
-			lv_lbl.size = Vector2(288, 22)
-			lv_lbl.add_theme_font_size_override("font_size", 15)
-			lv_lbl.add_theme_color_override("font_color", Color("#44ff44"))
-			lv_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			inner.add_child(lv_lbl)
-
-	# ─── 按钮 ────────────────────────────────────
-	var ok_btn := Button.new()
-	ok_btn.text = "继续冒险"
-	ok_btn.position = Vector2(100, 254)
-	ok_btn.custom_minimum_size = Vector2(120, 36)
-	ok_btn.add_theme_font_size_override("font_size", 15)
-	ok_btn.add_theme_color_override("font_color", Color("#e0e0e0"))
-	ok_btn.pressed.connect(func():
-		rpg_battle_dialog.hide()
-		if is_boss and result.result == "dead":
-			_show_result(false)
-	)
-	inner.add_child(ok_btn)
-
-	rpg_battle_dialog.show()
+func _on_bf_cleared() -> void:
+	pass
 
 
-func _show_rpg_game_over() -> void:
-	result_label.text = "💀 RPG 败北！Boss 太强了…"
-	result_label.add_theme_color_override("font_color", Color("#ff4a4a"))
-	result_overlay.show()
-	_animate_result_dialog()
+# ─── 战场触发器（由扫雷动作触发）──────────────
+
+func _trigger_rpg_battle(number: int, combo: int) -> void:
+	if not is_instance_valid(battlefield_ref):
+		return
+	battlefield_ref.add_soldiers(number)
+	battlefield_ref.spawn_wave_from_number(number, combo)
 
 
-# ═══════════════════════════════════════════════════
-#  难度切换
-# ═══════════════════════════════════════════════════
+func _trigger_boss_battle() -> void:
+	if not is_instance_valid(battlefield_ref):
+		_reveal_all_mines()
+		return
+	_reveal_all_mines()
+	battlefield_ref.spawn_boss(_rpg_chain_count)
 
 func _on_difficulty_pressed(diff: int) -> void:
 	if rogue_mode:
@@ -1491,53 +1410,6 @@ func _on_difficulty_pressed(diff: int) -> void:
 #  核心逻辑
 # ═══════════════════════════════════════════════════
 
-func _init_rogue_mode() -> void:
-	# 防止重复连接（重启爬塔时）
-	if rogue_floor_cleared.is_connected(_on_rogue_floor_cleared):
-		rogue_floor_cleared.disconnect(_on_rogue_floor_cleared)
-	var RM = load("res://scripts/rogue_manager.gd")
-	rogue_manager_ref = RM.new()
-	rogue_manager_ref.name = "RogueManager"
-	add_child(rogue_manager_ref)
-	rogue_floor_cleared.connect(_on_rogue_floor_cleared)
-	rogue_manager_ref.game_over.connect(_on_rogue_game_over)
-	rogue_manager_ref.start_run()
-	# 根据爬塔层数配置更新棋盘
-	var cfg = rogue_manager_ref.get_floor_config()
-	grid_cols = cfg.cols
-	grid_rows = cfg.rows
-	mine_total = cfg.mines
-	cell_size = 36
-	_update_window_size()
-	_rebuild_board()
-	reset_game()
-	# 爬塔 UI
-	if is_instance_valid(rogue_hud):
-		rogue_hud.show()
-	_update_rogue_hud()
-	_show_rogue_tutorial()
-
-
-func _on_rogue_floor_cleared() -> void:
-	if not is_instance_valid(rogue_manager_ref):
-		return
-	_update_rogue_hud()
-	# 最后一层 → 直接胜利
-	if rogue_manager_ref.current_floor >= rogue_manager_ref.MAX_FLOOR:
-		rogue_manager_ref.next_floor()  # 触发 game_over(true)
-		return
-	# 非最后一层 → 遗物选择
-	_show_relic_selection()
-
-
-func _on_rogue_game_over(won: bool, floor: int) -> void:
-	if is_instance_valid(rogue_hud):
-		rogue_hud.hide()
-	if won:
-		_show_result(true)
-	else:
-		_show_result(false)
-
 
 func start_rogue_run(rm: Node) -> void:
 	rogue_mode = true
@@ -1556,41 +1428,28 @@ func start_rogue_run(rm: Node) -> void:
 	_update_rogue_hud()
 
 
-func _rogue_long_press_threshold() -> float:
-	if rogue_mode and is_instance_valid(rogue_manager_ref):
-		# 调用 rogue_manager 的 LongPressThreshold() 方法
-		var threshold = rogue_manager_ref.get_long_press_threshold()
-		if threshold < 1.0:
-			return threshold
-	return LONG_PRESS_THRESHOLD
+
+func _on_rogue_floor_cleared() -> void:
+	if not is_instance_valid(rogue_manager_ref):
+		return
+	_update_rogue_hud()
+	# 最后一层 → 直接胜利
+	if rogue_manager_ref.current_floor >= rogue_manager_ref.MAX_FLOOR:
+		rogue_manager_ref.next_floor()  # 触发 game_over(true)
+		return
+	# 非最后一层 → 遗物选择
+	_show_relic_selection()
 
 
-# ─── RPG 模式 ─────────────────────────────────────
 
-func _init_rpg_mode() -> void:
-	var RM = load("res://scripts/rpg_manager.gd")
-	rpg_manager_ref = RM.new()
-	rpg_manager_ref.name = "RpgManager"
-	add_child(rpg_manager_ref)
-	rpg_manager_ref.player_died.connect(_on_rpg_player_died)
+func _on_rogue_game_over(won: bool, floor: int) -> void:
+	if is_instance_valid(rogue_hud):
+		rogue_hud.hide()
+	if won:
+		_show_result(true)
+	else:
+		_show_result(false)
 
-	# 初始化美术生成器
-	art_gen = ArtGen.new()
-	art_gen.name = "ArtGen"
-	add_child(art_gen)
-
-	# 用初级难度开始
-	current_difficulty = Difficulty.BEGINNER
-	_apply_difficulty_params()
-	cell_size = 36  # 小格子腾出 RPG HUD 空间
-	_update_window_size()
-	_rebuild_board()
-	reset_game()
-
-	if is_instance_valid(rpg_hud):
-		rpg_hud.show()
-	_update_rpg_hud()
-	_show_rpg_tutorial()
 
 
 func _show_rpg_tutorial() -> void:
@@ -1642,47 +1501,72 @@ func _show_rpg_tutorial() -> void:
 	panel.add_child(ok_btn)
 
 
-func _trigger_rpg_battle(number: int, combo: int) -> void:
-	if not is_instance_valid(rpg_manager_ref):
-		return
-	var result = rpg_manager_ref.encounter_monster(number, combo)
+
+func _init_rogue_mode() -> void:
+	# 防止重复连接（重启爬塔时）
+	if rogue_floor_cleared.is_connected(_on_rogue_floor_cleared):
+		rogue_floor_cleared.disconnect(_on_rogue_floor_cleared)
+	var RM = load("res://scripts/rogue_manager.gd")
+	rogue_manager_ref = RM.new()
+	rogue_manager_ref.name = "RogueManager"
+	add_child(rogue_manager_ref)
+	rogue_floor_cleared.connect(_on_rogue_floor_cleared)
+	rogue_manager_ref.game_over.connect(_on_rogue_game_over)
+	rogue_manager_ref.start_run()
+	# 根据爬塔层数配置更新棋盘
+	var cfg = rogue_manager_ref.get_floor_config()
+	grid_cols = cfg.cols
+	grid_rows = cfg.rows
+	mine_total = cfg.mines
+	cell_size = 36
+	_update_window_size()
+	_rebuild_board()
+	reset_game()
+	# 爬塔 UI
+	if is_instance_valid(rogue_hud):
+		rogue_hud.show()
+	_update_rogue_hud()
+	_show_rogue_tutorial()
+
+
+
+func _rogue_long_press_threshold() -> float:
+	if rogue_mode and is_instance_valid(rogue_manager_ref):
+		# 调用 rogue_manager 的 LongPressThreshold() 方法
+		var threshold = rogue_manager_ref.get_long_press_threshold()
+		if threshold < 1.0:
+			return threshold
+	return LONG_PRESS_THRESHOLD
+
+
+# ─── RPG 模式 ─────────────────────────────────────
+
+
+func _init_rpg_mode() -> void:
+	var RM = load("res://scripts/rpg_manager.gd")
+	rpg_manager_ref = RM.new()
+	rpg_manager_ref.name = "RpgManager"
+	add_child(rpg_manager_ref)
+	# 玩家死亡由 battlefield 信号处理
+
+	# 初始化美术生成器
+	art_gen = ArtGen.new()
+	art_gen.name = "ArtGen"
+	add_child(art_gen)
+
+	# 用初级难度开始
+	current_difficulty = Difficulty.BEGINNER
+	_apply_difficulty_params()
+	cell_size = 36  # 小格子腾出 RPG HUD 空间
+	_update_window_size()
+	_rebuild_board()
+	reset_game()
+
+	if is_instance_valid(rpg_hud):
+		rpg_hud.show()
 	_update_rpg_hud()
-	if result.result == "win":
-		audio.play("win")
-	else:
-		audio.play("lose")
-	_show_rpg_battle_result(result)
+	_show_rpg_tutorial()
 
-
-func _trigger_boss_battle() -> void:
-	if not is_instance_valid(rpg_manager_ref):
-		_reveal_all_mines()
-		return
-
-	# Boss 战前先揭示雷区
-	_reveal_all_mines()
-
-	var result = rpg_manager_ref.encounter_boss(_rpg_chain_count)
-	result.is_boss = true
-	_update_rpg_hud()
-
-	if result.result == "win":
-		audio.play("win")
-		_show_rpg_battle_result(result)
-		# Boss 战后继续游戏
-		return
-	else:
-		# 死亡
-		game_active = false
-		game_won = false
-		timer_node.stop()
-		restart_btn.text = "💀"
-		game_ended.emit(false)
-		_show_rpg_battle_result(result)
-
-
-func _on_rpg_player_died() -> void:
-	pass  # 由 _trigger_boss_battle 处理
 
 
 func _on_play_again() -> void:
@@ -1698,8 +1582,11 @@ func _on_play_again() -> void:
 			rpg_manager_ref.queue_free()
 		if is_instance_valid(art_gen):
 			art_gen.queue_free()
+		if is_instance_valid(battlefield_ref):
+			battlefield_ref.queue_free()
 		rpg_manager_ref = null
 		art_gen = null
+		battlefield_ref = null
 		_init_rpg_mode()
 		return
 	reset_game()
@@ -1731,6 +1618,8 @@ func reset_game() -> void:
 	restart_btn.text = "😊"
 	result_overlay.hide()
 
+	if is_instance_valid(battlefield_ref):
+		battlefield_ref.clear_all()
 	# RPG 模式重置 chain
 	if is_instance_valid(rpg_manager_ref):
 		rpg_manager_ref.combo_chain = 0
@@ -1884,6 +1773,14 @@ func _toggle_flag(col: int, row: int) -> void:
 
 	mine_label.text = str(mine_total - flag_count)
 	_update_cell(col, row)
+
+	# RPG 模式：标旗反馈
+	if rpg_mode and is_instance_valid(battlefield_ref):
+		if grid_state[idx] == CellType.FLAGGED:
+			if grid_mine[idx]:
+				battlefield_ref.on_correct_flag()
+			else:
+				battlefield_ref.on_wrong_flag()
 	flag_count_changed.emit(flag_count)
 
 
